@@ -6,6 +6,5 @@
 *.h5ad
 *.loom
 
-data/RUN2_NR3/exprMat_for_Seurat_RUN2_NR3.RDS
 results/
 plots/
