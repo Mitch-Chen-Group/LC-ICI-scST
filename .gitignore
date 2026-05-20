@@ -1,0 +1,12 @@
+.DS_Store
+
+*.rds
+*.rda
+*.RData
+*.h5ad
+*.loom
+
+data/
+others/
+results/
+plots/
