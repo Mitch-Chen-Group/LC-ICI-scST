@@ -2,17 +2,13 @@
 ## Libraries
 library(Seurat)
 library(dplyr)
-library(stringr)
 library(tibble)
-library(tidyr)
 library(ggplot2)
 library(ggrepel)
 library(Matrix)
 library(readxl)
 library(survival)
 library(survminer)
-library(cowplot)
-library(forcats)
 
 set.seed(1234)
 
@@ -185,29 +181,21 @@ surv_df$group_NR <- ifelse(surv_df$NRup_nonCXCL9up_score >= median(surv_df$NRup_
 surv_df$group_NR <- factor(surv_df$group_NR, levels = c("Low", "High"))
 fit_NR <- survfit(Surv(PFS_months, Progression) ~ group_NR, data = surv_df)
 ggsurvplot(
-  fit_NR,     # survfit object with calculated statistics.
-  data = surv_df,               # data used to fit survival curves. 
-  pval = T,             # show p-value of log-rank test.
-  conf.int = F,         # show confidence intervals for 
-  # point estimaes of survival curves.
-  # xlim = c(0,1095),        # present narrower X axis, but not affect
-  # survival estimates.
-  break.time.by = 6,     # break X axis in time intervals by 100.
-  # ggtheme = theme,         # customize plot and risk table with a theme.
-  risk.table.y.text.col = T, # colour risk table text annotations.
-  risk.table.y.text = T, # show bars instead of names in text annotations
-  # in legend of risk table
-  legend.labs=c("Low", "High"),
+  fit_NR,
+  data = surv_df,
+  pval = T,                   # log-rank p-value
+  conf.int = F,
+  break.time.by = 6,          # x-axis breaks every 6 months
+  risk.table.y.text.col = T,
+  risk.table.y.text = T,
+  legend.labs = c("Low", "High"),
   risk.table = T,
-  palette="jco",
-  # tables.theme = theme,
-  # title = "Kaplan-Meier Plots of Stratified Groups By Biomarker",
-  xlab="Time in Months",
-  ylab="PFS Probability",
+  palette = "jco",
+  xlab = "Time in Months",
+  ylab = "PFS Probability",
   surv.median.line = "v",
-  # ylim=c(0,1),
-  cumevents=F,
-  surv.scale="percent"
+  cumevents = F,
+  surv.scale = "percent"
 )
 
 ## KM: R signature (median split)
@@ -218,28 +206,22 @@ surv_df$group_R <- ifelse(
 surv_df$group_R <- factor(surv_df$group_R, levels = c("Low", "High"))
 fit_R <- survfit(Surv(PFS_months, Progression) ~ group_R, data = surv_df)
 ggsurvplot(
-  fit_R,     # survfit object with calculated statistics.
-  data = surv_df,               # data used to fit survival curves. 
-  pval = T,             # show p-value of log-rank test.
-  conf.int = F,         # show confidence intervals for point estimaes of survival curves.
-  # xlim = c(0,1095),        # present narrower X axis, but not affect
-  # survival estimates.
-  break.time.by = 6,     # break X axis in time intervals by 100.
-  # ggtheme = theme,         # customize plot and risk table with a theme.
-  risk.table.y.text.col = T, # colour risk table text annotations.
-  risk.table.y.text = T, # show bars instead of names in text annotations
-  # in legend of risk table
-  legend.labs=c("Low", "High"),
+  fit_R,
+  data = surv_df,
+  pval = T,                   # log-rank p-value
+  conf.int = F,
+  break.time.by = 6,          # x-axis breaks every 6 months
+  risk.table.y.text.col = T,
+  risk.table.y.text = T,
+  legend.labs = c("Low", "High"),
   risk.table = T,
-  palette="jco",
-  # tables.theme = theme,
-  # title = "Kaplan-Meier Plots of Stratified Groups By Biomarker",
-  xlab="Time in Months",
-  ylab="PFS Probability",
+  palette = "jco",
+  xlab = "Time in Months",
+  ylab = "PFS Probability",
   surv.median.line = "v",
-  # ylim=c(0,1),
-  cumevents=F,
-  surv.scale="percent")
+  cumevents = F,
+  surv.scale = "percent"
+)
 
 ## Cox
 cox_fit_NR <- coxph(Surv(PFS_months, Progression) ~ NRup_nonCXCL9up_score, data = surv_df)
@@ -252,12 +234,6 @@ write.csv(surv_df, file.path(base_dir,"our_cohort_CXCL9_vs_nonCXCL9_signature_sc
 ## =====================================================
 # SU2C-MARK COHORT
 ## =====================================================
-## Libraries
-library(data.table)
-library(dplyr)
-library(tibble)
-library(ggplot2)
-
 ## =====================================================
 ## Bulk RNA-seq validation (SU2C-MARK)
 dir <- "/path/to/folder"
@@ -350,29 +326,46 @@ run_all_tests(df_w_io, "Rup_CXCL9up_score_w")
 ## =====================================================
 ## PD-to-PR sig
 ## =====================================================
+## Shared color scheme:
+## Non-responder / PD / SD -> red-family shades
+## Responder / PR / CR     -> teal-family shades
+binary_colors <- c(
+  "Non-responder" = "#F8766D",   # base red-family (matches PD/SD family below)
+  "Responder"     = "#00BFC4"    # base teal-family (matches PR/CR family below)
+)
+
+bor_colors <- c(
+  "PD" = "#E07A7A",   # darker red  (more severe end of non-responder family)
+  "SD" = "#F0A8A8",   # lighter red (milder end of non-responder family)
+  "PR" = "#7FC7C6",   # lighter teal (milder end of responder family)
+  "CR" = "#4FA9A8"    # darker teal (deeper end of responder family)
+)
+
 plot_NR_R_axis <- function(meta_df){
   df <- meta_df %>%
     mutate(ratio_NR_R = NRup_nonCXCL9up_score_w - Rup_CXCL9up_score_w)
   df$response_lbl <- factor(df$response_lbl,
                             levels = c("Non-responder","Responder"))
-   df$Harmonized_Confirmed_BOR <- factor(df$Harmonized_Confirmed_BOR,
-                                         levels = c("PD","SD","PR","CR"))
+  df$Harmonized_Confirmed_BOR <- factor(df$Harmonized_Confirmed_BOR,
+                                        levels = c("PD","SD","PR","CR"))
   
   ## Binary
   print(ggplot(df,aes(response_lbl,ratio_NR_R,fill = response_lbl)) +
-      geom_boxplot(outlier.shape = NA) +
-      geom_jitter(width = 0.15) +
-      theme_bw() +
-      labs(y = "PD-to-PR score",x = NULL))
+          geom_boxplot(outlier.shape = NA) +
+          geom_jitter(width = 0.15) +
+          scale_fill_manual(values = binary_colors) +
+          theme_bw() +
+          labs(y = "PD-to-PR score",x = NULL))
   print(wilcox.test(ratio_NR_R ~ response_lbl,
-                data = df))
+                    data = df))
   
   ## iRECIST
   print(ggplot(df,aes(Harmonized_Confirmed_BOR,ratio_NR_R,fill = Harmonized_Confirmed_BOR)) +
-      geom_boxplot(outlier.shape = NA) +
-      geom_jitter(width = 0.15) +
-      theme_bw() +
-      labs(y = "PD-to-PR score",x = NULL))
+          geom_boxplot(outlier.shape = NA) +
+          geom_jitter(width = 0.15) +
+          scale_fill_manual(values = bor_colors) +
+          theme_bw() +
+          labs(y = "PD-to-PR score",x = NULL))
   
   ## global test
   print(kruskal.test(ratio_NR_R ~ Harmonized_Confirmed_BOR,data = df))
@@ -409,7 +402,7 @@ df <- surv_all %>%
 
 ## =====================================================
 ## optimal cutoff
-minprop_val <- 0.1
+minprop_val <- 0.2
 ## PFS ===
 cut_pfs <- surv_cutpoint(df,time = "PFS_time",event = "PFS_event",
                          variables = "ratio_NR_R",minprop = minprop_val)
@@ -451,3 +444,111 @@ ggsurvplot(
 ## Cox
 print(summary(coxph(Surv(OS_time, OS_event) ~ ratio_NR_R_opt_os, data = df)))
 
+## =====================================================
+## Administrative censoring at 20 months
+
+cutoff <- 20
+
+## PFS
+df$PFS_time20  <- pmin(df$PFS_time, cutoff)
+df$PFS_event20 <- ifelse(df$PFS_time <= cutoff & df$PFS_event == 1, 1, 0)
+
+## OS
+df$OS_time20  <- pmin(df$OS_time, cutoff)
+df$OS_event20 <- ifelse(df$OS_time <= cutoff & df$OS_event == 1, 1, 0)
+
+
+## =====================================================
+## Optimal cutoff
+minprop_val <- 0.15
+
+## PFS ===
+cut_pfs <- surv_cutpoint(
+  df,
+  time = "PFS_time20",
+  event = "PFS_event20",
+  variables = "ratio_NR_R",
+  minprop = minprop_val
+)
+
+cut_val_pfs <- cut_pfs$cutpoint$cutpoint
+
+df$ratio_NR_R_opt_pfs <- factor(
+  ifelse(df$ratio_NR_R > cut_val_pfs, "High", "Low"),
+  levels = c("Low", "High")
+)
+
+## KM
+fit_pfs_opt <- survfit(
+  Surv(PFS_time20, PFS_event20) ~ ratio_NR_R_opt_pfs,
+  data = df
+)
+
+ggsurvplot(
+  fit_pfs_opt,
+  data = df,
+  pval = F,
+  risk.table = TRUE,
+  palette = c("#1F4E99", "#FF1F1F"),
+  legend.title = "",
+  legend = "none",
+  legend.labs = c("Low", "High"),
+  xlab = "Months",
+  title = ""
+)
+
+## Cox
+print(summary(
+  coxph(Surv(PFS_time20, PFS_event20) ~ ratio_NR_R_opt_pfs, data = df)
+))
+
+print(summary(
+  coxph(Surv(PFS_time20, PFS_event20) ~ ratio_NR_R, data = df)
+))
+
+
+
+## =====================================================
+## OS ===
+cut_os <- surv_cutpoint(
+  df,
+  time = "OS_time20",
+  event = "OS_event20",
+  variables = "ratio_NR_R",
+  minprop = minprop_val
+)
+
+cut_val_os <- cut_os$cutpoint$cutpoint
+
+df$ratio_NR_R_opt_os <- factor(
+  ifelse(df$ratio_NR_R > cut_val_os, "High", "Low"),
+  levels = c("Low", "High")
+)
+
+## KM
+fit_os_opt <- survfit(
+  Surv(OS_time20, OS_event20) ~ ratio_NR_R_opt_os,
+  data = df
+)
+
+ggsurvplot(
+  fit_os_opt,
+  data = df,
+  pval = F,
+  risk.table = TRUE,
+  palette = c("#1F4E99", "#FF1F1F"),
+  legend.title = "",
+  legend = "none",
+  legend.labs = c("Low", "High"),
+  xlab = "Months",
+  title = ""
+)
+
+## Cox
+print(summary(
+  coxph(Surv(OS_time20, OS_event20) ~ ratio_NR_R_opt_os, data = df)
+))
+
+print(summary(
+  coxph(Surv(OS_time20, OS_event20) ~ ratio_NR_R, data = df)
+))

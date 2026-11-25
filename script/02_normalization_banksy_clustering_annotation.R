@@ -11,7 +11,6 @@ library(harmony)
 library(cowplot)
 library(rlang)
 library(scales)
-library(plyr)
 
 ## =====================================================
 ## Paths + input
@@ -47,7 +46,7 @@ saveRDS(seu, file=file.path(out_dir, "ALL_Seurat_Norm.rds"))
 ## =====================================================
 # neighbourhood expression construction
 # Run Banksy (combines individual spot/cell expression and spatial-neighbourhood summaries into a seurat object)
-# [this part wil replace your original scale.data] do not call scale.data after running banksy
+# this part will replace original scale.data, do not call scale.data after running banksy
 # using global_fovID as group
 # memory intensive
 seu <- RunBanksy(seu, lambda = 0.2, # 0.2 for weaker smoothing, closer to 1 is for stronger spatial smoothing
@@ -56,7 +55,7 @@ seu <- RunBanksy(seu, lambda = 0.2, # 0.2 for weaker smoothing, closer to 1 is f
                  dimy = "CenterX_global_px",
                  assay = "RNA", slot = "data", features = "all",
                  group = "global_fovID", # must specify otherwise the coordinates will overlap
-                 split.scale = FALSE, # TRUE if you have a strong batch effect, but PCA won't run... don't know why
+                 split.scale = FALSE, 
                  k_geom = 5) # how large a region you want to smooth: recommend 5-20
 saveRDS(seu, file=file.path(out_dir, "ALL_Seurat_Banksy.rds"))
 
@@ -75,7 +74,7 @@ DimPlot(seu, reduction = "pca", split.by="slideID")
 DimPlot(seu, reduction = "pca", split.by="response")
 
 #Determining the number of PCs for UMAP
-npcs = 25
+npcs = 20
 ElbowPlot(seu, ndims = 50) + 
   geom_vline(xintercept = npcs, linetype="dotted", color = "red", size=1) + 
   geom_hline(yintercept = seu@reductions$pca@stdev[npcs], linetype="dotted", color = "red", size=1)
@@ -99,8 +98,8 @@ saveRDS(seu, file=file.path(out_dir, "ALL_Seurat_Harmony.rds"))
 ## =====================================================
 # UMAP and Clustering
 set.seed(1234)
-seu <- FindNeighbors(seu, reduction = "harmony", dims=1:20)
-seu <- RunUMAP(seu, reduction = "harmony", dims = 1:20)
+seu <- FindNeighbors(seu, reduction = "harmony", dims = 1:npcs)
+seu <- RunUMAP(seu, reduction = "harmony", dims = 1:npcs)
 
 DefaultAssay(seu) <- "BANKSY"
 seu <- FindClusters(seu, resolution = 0.5, algorithm = 4)

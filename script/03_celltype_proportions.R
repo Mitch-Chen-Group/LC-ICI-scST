@@ -127,18 +127,18 @@ df <- seu@meta.data %>%
   mutate(prop = cells / sum(cells)) %>%
   ungroup()
 
-# stacked barplot: proportion of each cell type per patient
+# stacked barplot: proportion of each cell type per response group
 p <- ggplot(df, aes(x = response_lbl, y = prop, fill = major_annot)) +
   geom_col(position = "fill") +
   scale_y_continuous(labels = scales::percent) +
   scale_fill_manual(values = light_cluster_colors) +
-  labs(x = "Patient", y = "Proportion", fill = "Cell type",
+  labs(x = "Response group", y = "Proportion", fill = "Cell type",
        title = "Cell type proportions per response group") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 p
 
-# stacked barplot: proportion of each cell type per patient (without 'Unassigned')
+# stacked barplot: proportion of each cell type per response group (without 'Unassigned')
 df_no_unassigned <- df %>%
   filter(major_annot != "Unassigned")
 

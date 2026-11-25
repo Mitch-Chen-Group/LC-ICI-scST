@@ -9,7 +9,7 @@ library(tibble)
 
 ## =============================================================================
 ## Global inputs
-base_dir <- "path/to/folder"
+base_dir <- "/path/to/folder"
 seu_path <- file.path(base_dir, "ALL_Seurat_annot_combined_mac_T.rds")
 seu <- readRDS(seu_path)
 
@@ -17,13 +17,13 @@ seu <- readRDS(seu_path)
 ## One row per slide
 slide_manifest <- tibble::tribble(
   ~slide_key, ~slide_name, ~raw_data_dir,
-  "NR1", "RUN1_NR1", "/path/to/flatFiles_polygons/RUN1_NR1",
-  "NR2", "RUN1_NR2", "/path/to/flatFiles_polygons/RUN1_NR2",
-  "R1",  "RUN1_R1", "/path/to/flatFiles_polygons/RUN1_R1",
-  "R2",  "RUN1_R2", "/path/to/flatFiles_polygons/RUN1_R2",
-  "NR3", "RUN2_NR3", "/path/to/flatFiles_polygons/RUN2_NR3",
-  "NR4", "RUN2_NR4", "/path/to/flatFiles_polygons/RUN2_NR4",
-  "R3",  "RUN2_R3", "/path/to/flatFiles_polygons/RUN2_R3"
+  "NR1", "RUN1_NR1", "/path/to/flatFiles_polygons_qced_data/RUN1_NR1",
+  "NR2", "RUN1_NR2", "/path/to/flatFiles_polygons_qced_data/RUN1_NR2",
+  "R1",  "RUN1_R1", "/path/to/flatFiles_polygons_qced_data/RUN1_R1",
+  "R2",  "RUN1_R2", "/path/to/flatFiles_polygons_qced_data/RUN1_R2",
+  "NR3", "RUN2_NR3", "/path/to/flatFiles_polygons_qced_data/RUN2_NR3",
+  "NR4", "RUN2_NR4", "/path/to/flatFiles_polygons_qced_data/RUN2_NR4",
+  "R3",  "RUN2_R3", "/path/to/flatFiles_polygons_qced_data/RUN2_R3"
 )
 slide_manifest$slide_key <- trimws(as.character(slide_manifest$slide_key))
 slide_manifest$slide_name <- trimws(as.character(slide_manifest$slide_name))
@@ -57,7 +57,7 @@ light_cols <- c("Epi"        = "#B2182B",
 #                         "Cytotoxic_CD8T" = "#9C27B0",
 #                         "Activated_CD4T" = "#BA68C8",
 #                         "Treg"           = "#6A1B9A",
-#                         "Ribosome_T"     = "#CE93D8",
+#                         "Cycling_like_T" = "#CE93D8",
 #                         "MMP19_Mac"      = "#29B6F6",
 #                         "SPP1_Mac"       = "#FB8C00",
 #                         "MARCO_Mac"      = "#00ACC1",
@@ -72,7 +72,7 @@ light_cols_combined <- c("Epi"            = "#D73027",
                          "Cytotoxic_CD8T" = "#542788",
                          "Activated_CD4T" = "#984EA3",
                          "Treg"           = "#542788",
-                         "Ribosome_T"     = "#C2A5CF",
+                         "Cycling_like_T" = "#C2A5CF",
                          "MMP19_Mac"      = "yellow",
                          "SPP1_Mac"       = "yellow",
                          "MARCO_Mac"      = "yellow",
@@ -87,7 +87,7 @@ dark_cols_combined <- c("Epi"            = "#D73027",
                         "Cytotoxic_CD8T" = "#00E5FF",
                         "Activated_CD4T" = "#984EA3",
                         "Treg"           = "#542788",
-                        "Ribosome_T"     = "#C2A5CF",
+                        "Cycling_like_T" = "#C2A5CF",
                         "MMP19_Mac"      = "yellow",
                         "SPP1_Mac"       = "yellow",
                         "MARCO_Mac"      = "yellow",
@@ -176,18 +176,12 @@ load_cosmx_slide <- function(slide_key, slide_manifest) {
   slide_name   <- slide_manifest$slide_name[idx]
   raw_data_dir <- slide_manifest$raw_data_dir[idx]
   
-  metadata_file <- file.path(raw_data_dir, paste0(slide_name, "_metadata_file.csv.gz"))
   polygons_file <- file.path(raw_data_dir, paste0(slide_name, "-polygons.csv.gz"))
-  fovpos_file   <- file.path(raw_data_dir, paste0(slide_name, "_fov_positions_file.csv.gz"))
-  
-  if (!file.exists(metadata_file)) stop("Metadata file not found: ", metadata_file)
+
   if (!file.exists(polygons_file)) stop("Polygon file not found: ", polygons_file)
-  if (!file.exists(fovpos_file)) stop("FOV positions file not found: ", fovpos_file)
-  
+
   obj <- list(
-    cell_meta = read.csv(metadata_file),
-    cell_polygons = fread(polygons_file),
-    fov_positions = fread(fovpos_file)
+    cell_polygons = fread(polygons_file)
   )
   
   assign(slide_key, obj, envir = .cosmx_cache)

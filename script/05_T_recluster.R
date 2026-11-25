@@ -4,7 +4,6 @@ library(Seurat)
 library(ggplot2)
 library(dplyr)
 library(harmony)
-library(plyr)
 
 ## =====================================================
 ## Paths + input
@@ -27,18 +26,18 @@ T_seu = RunPCA(T_seu, features=rownames(T_seu))
 # HARMONY
 T_seu = RunHarmony(T_seu, group.by.vars = c("runID","slideID"), plot_convergence = TRUE)
 
-npcs = 10
-ElbowPlot(T_seu, ndims = 50) + 
+npcs = 15
+ElbowPlot(T_seu, ndims = 50) +
   geom_vline(xintercept = npcs, linetype="dotted", color = "red", size=1) + 
   geom_hline(yintercept = T_seu@reductions$pca@stdev[npcs], linetype="dotted", color = "red", size=1)
 
 # UMAP and reclustering
 set.seed(1234)
 DefaultAssay(T_seu) <- "RNA"
-T_seu <- FindNeighbors(T_seu, reduction = "harmony", dims=1:15)
-T_seu <- RunUMAP(T_seu, reduction = "harmony", dims = 1:15)
-T_seu <- FindClusters(T_seu, resolution = 0.3, algorithm = 4)
-DimPlot(T_seu, reduction = "umap", label=T, cols="alphabet", raster=FALSE, group.by = "RNA_snn_res.0.3")
+T_seu <- FindNeighbors(T_seu, reduction = "harmony", dims = 1:npcs)
+T_seu <- RunUMAP(T_seu, reduction = "harmony", dims = 1:npcs)
+T_seu <- FindClusters(T_seu, resolution = 0.5, algorithm = 4)
+DimPlot(T_seu, reduction = "umap", label=T, cols="alphabet", raster=FALSE, group.by = "RNA_snn_res.0.5")
 
 # find markers for each cluster
 DefaultAssay(T_seu) <- "RNA"
@@ -53,32 +52,15 @@ T_seu.markers_df <- T_seu.markers %>%
 ## annotation
 T_seu$seurat_clusters <- T_seu$RNA_snn_res.0.5
 Idents(T_seu) <- T_seu$seurat_clusters
-new_cluster_ids <- c(
-  "1" = "T",
-  "2" = "Unassigned",
-  "3" = "Unassigned",
-  "4" = "T",
-  "5" = "Unassigned",
-  "6" = "Unassigned",
-  "7" = "Unassigned",
-  "8" = "Unassigned",
-  "9" = "Unassigned"
-)
-
-T_seu$T_subtype <- plyr::mapvalues(
-  T_seu$seurat_clusters,
-  from = names(new_cluster_ids),
-  to = new_cluster_ids
-)
-
-T_seu$T_subtype <- factor(T_seu$T_subtype, levels = c("T", "Unassigned"))
+T_clusters <- c("1", "4")
+T_seu$T_subtype <- factor(ifelse(T_seu$seurat_clusters %in% T_clusters, "T", "Unassigned"),
+                          levels = c("T", "Unassigned"))
 
 saveRDS(T_seu, file.path(dir, "ALL_Seurat_T_Recluster_1.rds"))
 
 ## =====================================================
 ## Re-clustering
 ## removing "Unassigned"
-# Tonly <- readRDS("ALL_Seurat_T_Recluster_1.rds)
 T_only <- subset(T_seu, subset = T_subtype %in% "T")
 
 ## Re-normalize
@@ -101,8 +83,8 @@ ElbowPlot(T_only, ndims = 50) +
 # UMAP and reclustering
 set.seed(1234)
 DefaultAssay(T_only) <- "RNA"
-T_only <- FindNeighbors(T_only, reduction = "harmony", dims=1:10)
-T_only <- RunUMAP(T_only, reduction = "harmony", dims = 1:10)
+T_only <- FindNeighbors(T_only, reduction = "harmony", dims = 1:npcs)
+T_only <- RunUMAP(T_only, reduction = "harmony", dims = 1:npcs)
 T_only <- FindClusters(T_only, resolution = 0.4, algorithm = 4)
 DimPlot(T_only, reduction = "umap", label=T, cols="alphabet", raster=FALSE, group.by = "RNA_snn_res.0.4")
 
@@ -136,7 +118,7 @@ Idents(T_only) <- T_only$seurat_clusters
 new_cluster_ids <- c(
   "1" = "Activated_CD4T",
   "2" = "Cytotoxic_CD8T",
-  "3" = "Ribosome_T",
+  "3" = "Cycling_like_T",
   "4" = "Treg"
 )
 
@@ -145,7 +127,7 @@ T_only$T_subtype <- plyr::mapvalues(
   from = names(new_cluster_ids),
   to = new_cluster_ids
 )
-T_only$T_subtype <- factor(T_only$T_subtype, levels = c("Cytotoxic_CD8T", "Activated_CD4T", "Treg", "Ribosome_T"))
+T_only$T_subtype <- factor(T_only$T_subtype, levels = c("Cytotoxic_CD8T", "Activated_CD4T", "Treg", "Cycling_like_T"))
 palette.pbmc <- c("#b30024",
                   # "#e31a1c",
                   # "#ff7f00",
@@ -171,7 +153,7 @@ custom_markers <- list(
   Cytotoxic_CD8T       = c("GNLY", "GZMB", "PRF1", "NKG7", "GZMA"),
   Activated_CD4T       = c("TNFSF8", "FOS", "DUSP1", "CCR7", "CXCR4"),
   Treg                 = c("IL2RA", "TNFRSF4", "CTLA4", "TNFRSF18", "ICA1"),
-  Ribosome_T           = c("RPL22", "RPL32", "RPL34", "TPT1", "NACA")
+  Cycling_like_T       = c("RPL22", "RPL32", "RPL34", "TPT1", "NACA")
 )
 
 features_final <- c("CD4", "CD8A", "CD8B", unique(unlist(custom_markers)))

@@ -11,7 +11,8 @@ library(dplyr)
 ## =====================================================
 ## Load data
 base_dir <- "/path/to/folder"
-seu <- readRDS(file.path(base_dir, "ALL_Seurat_annot_combined_xP7.rds"))
+seu <- readRDS(file.path(base_dir, "ALL_Seurat_annot_combined.rds"))
+seu <- subset(seu, subset = PatientID != "P7")
 
 ## =====================================================
 ## Define groups + Idents
@@ -27,12 +28,12 @@ stopifnot(ncol(seu_PR) > 0, ncol(seu_PD) > 0)
 
 CellChatDB <- CellChatDB.human
 
-saveRDS(seu_PD, file.path(base_dir, "seu_PD_xP7.rds"))
-saveRDS(seu_PR, file.path(base_dir, "seu_PR_xP7.rds"))
+saveRDS(seu_PD, file.path(base_dir, "seu_PD.rds"))
+saveRDS(seu_PR, file.path(base_dir, "seu_PR.rds"))
 
 ## =====================================================
 ## PR CellChat (spatial mode)
-data.input <- Seurat::GetAssayData(seu_PR, slot = "data", assay = "RNA")
+data.input <- Seurat::GetAssayData(seu_PR, layer = "data", assay = "RNA")
 
 meta <- data.frame(
   labels = Seurat::Idents(seu_PR),
@@ -49,9 +50,13 @@ rownames(spatial.locs) <- rownames(seu_PR@meta.data)
 spatial.locs <- as.matrix(spatial.locs)
 
 conversion.factor <- 0.12028
-d <- computeCellDistance(spatial.locs) # memory intensive
-spot.size <- min(d) * conversion.factor
-spatial.factors <- data.frame(ratio = conversion.factor, tol = spot.size/2)
+## one row of spatial factors per sample (patient), as in the CellChat multi-sample tutorial
+## spot.size = smallest cell-to-cell distance within each patient (nearest-neighbour search)
+samples.use <- levels(meta$samples)
+spot.size <- sapply(samples.use, function(s) {
+  min(BiocNeighbors::findKNN(spatial.locs[meta$samples == s, , drop = FALSE], k = 1)$distance)
+}) * conversion.factor
+spatial.factors <- data.frame(ratio = conversion.factor, tol = spot.size/2, row.names = samples.use)
 
 cellchat_PR <- createCellChat(
   object = data.input, meta = meta, group.by = "labels",
@@ -96,9 +101,13 @@ rownames(spatial.locs) <- rownames(seu_PD@meta.data)
 spatial.locs <- as.matrix(spatial.locs)
 
 conversion.factor <- 0.12028
-d <- computeCellDistance(spatial.locs) # memory intensive
-spot.size <- min(d) * conversion.factor
-spatial.factors <- data.frame(ratio = conversion.factor, tol = spot.size/2)
+## one row of spatial factors per sample (patient), as in the CellChat multi-sample tutorial
+## spot.size = smallest cell-to-cell distance within each patient (nearest-neighbour search)
+samples.use <- levels(meta$samples)
+spot.size <- sapply(samples.use, function(s) {
+  min(BiocNeighbors::findKNN(spatial.locs[meta$samples == s, , drop = FALSE], k = 1)$distance)
+}) * conversion.factor
+spatial.factors <- data.frame(ratio = conversion.factor, tol = spot.size/2, row.names = samples.use)
 
 cellchat_PD <- createCellChat(
   object = data.input, meta = meta, group.by = "labels",
@@ -131,9 +140,9 @@ cellchat_PRvsPD <- mergeCellChat(object.list, add.names = names(object.list))
 saveRDS(cellchat_PRvsPD, file = file.path(base_dir, "cellchat_PRvsPD_spatial_merged.rds"))
 
 ## =====================================================
-cellchat_PR <- readRDS(file = file.path(base_dir, "cellchat_PR_xP7_spatial.rds"))
-cellchat_PD <- readRDS(file = file.path(base_dir, "cellchat_PD_xP7_spatial.rds"))
-cellchat_PRvsPD <- readRDS(file = file.path(base_dir, "cellchat_PRvsPD_xP7_spatial_merged.rds"))
+cellchat_PR <- readRDS(file = file.path(base_dir, "cellchat_PR_spatial.rds"))
+cellchat_PD <- readRDS(file = file.path(base_dir, "cellchat_PD_spatial.rds"))
+cellchat_PRvsPD <- readRDS(file = file.path(base_dir, "cellchat_PRvsPD_spatial_merged.rds"))
 
 ## =====================================================
 ## overall interactions (count + strength)
@@ -171,7 +180,7 @@ gg1 + gg2
 # Increased in PD => max.dataset = 2, Decreased in PD => max.dataset = 1.
 
 # SPP1_Mac -> Epi
-sources <- c("SPP1_APOE_Mac")
+sources <- c("SPP1_Mac")
 targets <- c("Epi")
 ggC_inc <- netVisual_bubble(
   cellchat_PRvsPD,
@@ -193,7 +202,7 @@ ggC_inc + ggC_dec
 
 # Epi -> SPP1_Mac
 sources <- c("Epi")
-targets <- c("SPP1_APOE_Mac")
+targets <- c("SPP1_Mac")
 ggD_inc <- netVisual_bubble(
   cellchat_PRvsPD,
   sources.use = sources, targets.use = targets,
@@ -213,11 +222,8 @@ ggD_dec <- netVisual_bubble(
 ggD_inc + ggD_dec
 
 ## =====================================================
-## chord diagrams for SPP1 pathway in PD vs PR
+## chord diagram for SPP1 pathway in PD
 pathways.show <- "SPP1"
-par(mfrow = c(1,2), xpd = TRUE)
+par(xpd = TRUE)
 netVisual_aggregate(cellchat_PD, signaling = pathways.show, layout = "chord",
                     signaling.name = "SPP1 Signalling (PD)", vertex.weight = NULL)
-netVisual_aggregate(cellchat_PR, signaling = pathways.show, layout = "chord",
-                    signaling.name = "SPP1 Signalling (PR)", vertex.weight = NULL)
-par(mfrow = c(1,1))

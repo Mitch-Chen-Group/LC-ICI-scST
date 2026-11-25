@@ -4,7 +4,6 @@ library(Seurat)
 library(ggplot2)
 library(dplyr)
 library(harmony)
-library(plyr)
 
 ## =====================================================
 ## Paths + input
@@ -27,16 +26,16 @@ mac_seu = RunPCA(mac_seu, features=rownames(mac_seu))
 # HARMONY
 mac_seu = RunHarmony(mac_seu, group.by.vars = c("runID","slideID"), plot_convergence = TRUE)
 
-npcs = 10
-ElbowPlot(mac_seu, ndims = 50) + 
+npcs = 15
+ElbowPlot(mac_seu, ndims = 50) +
   geom_vline(xintercept = npcs, linetype="dotted", color = "red", size=1) + 
   geom_hline(yintercept = mac_seu@reductions$pca@stdev[npcs], linetype="dotted", color = "red", size=1)
 
 # UMAP and reclustering
 set.seed(1234)
 DefaultAssay(mac_seu) <- "RNA"
-mac_seu <- FindNeighbors(mac_seu, reduction = "harmony", dims=1:15)
-mac_seu <- RunUMAP(mac_seu, reduction = "harmony", dims = 1:15)
+mac_seu <- FindNeighbors(mac_seu, reduction = "harmony", dims = 1:npcs)
+mac_seu <- RunUMAP(mac_seu, reduction = "harmony", dims = 1:npcs)
 mac_seu <- FindClusters(mac_seu, resolution = 0.5, algorithm = 4)
 DimPlot(mac_seu, reduction = "umap", label=T, cols="alphabet", raster=FALSE, group.by = "RNA_snn_res.0.5")
 
@@ -53,25 +52,9 @@ mac_seu.markers_df <- mac_seu.markers %>%
 ## annotation
 mac_seu$seurat_clusters <- mac_seu$RNA_snn_res.0.5
 Idents(mac_seu) <- mac_seu$seurat_clusters
-new_cluster_ids <- c(
-  "1" = "Mac",
-  "2" = "Unassigned",
-  "3" = "Unassigned",
-  "4" = "Mac",
-  "5" = "Mac",
-  "6" = "Mac",
-  "7" = "Unassigned",
-  "8" = "Unassigned",
-  "9" = "Unassigned"
-)
-
-mac_seu$mac_subtype <- plyr::mapvalues(
-  mac_seu$seurat_clusters,
-  from = names(new_cluster_ids),
-  to = new_cluster_ids
-)
-
-mac_seu$mac_subtype <- factor(mac_seu$mac_subtype, levels = c("Mac", "Unassigned"))
+mac_clusters <- c("1", "4", "5", "6")
+mac_seu$mac_subtype <- factor(ifelse(mac_seu$seurat_clusters %in% mac_clusters, "Mac", "Unassigned"),
+                              levels = c("Mac", "Unassigned"))
 
 saveRDS(mac_seu, file.path(dir, "ALL_Seurat_Mac_Recluster_1.rds"))
 
@@ -93,16 +76,16 @@ mac_only = RunPCA(mac_only, features=rownames(mac_only))
 # HARMONY
 mac_only = RunHarmony(mac_only, group.by.vars = c("runID","slideID"), plot_convergence = TRUE)
 
-npcs = 10
-ElbowPlot(mac_only, ndims = 50) + 
+npcs = 15
+ElbowPlot(mac_only, ndims = 50) +
   geom_vline(xintercept = npcs, linetype="dotted", color = "red", size=1) + 
   geom_hline(yintercept = mac_only@reductions$pca@stdev[npcs], linetype="dotted", color = "red", size=1)
 
 # UMAP and reclustering
 set.seed(1234)
 DefaultAssay(mac_only) <- "RNA"
-mac_only <- FindNeighbors(mac_only, reduction = "harmony", dims=1:15)
-mac_only <- RunUMAP(mac_only, reduction = "harmony", dims = 1:15)
+mac_only <- FindNeighbors(mac_only, reduction = "harmony", dims = 1:npcs)
+mac_only <- RunUMAP(mac_only, reduction = "harmony", dims = 1:npcs)
 mac_only <- FindClusters(mac_only, resolution = 0.3, algorithm = 4)
 DimPlot(mac_only, reduction = "umap", label=T, cols="alphabet", raster=FALSE, group.by = "RNA_snn_res.0.3")
 

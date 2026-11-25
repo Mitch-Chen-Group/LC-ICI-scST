@@ -5,7 +5,6 @@
 ## =============================================================================
 ## Libraries
 library(dplyr)
-library(tidyr)
 library(Seurat)
 library(SingleCellExperiment)
 library(SpatialExperiment)
@@ -14,12 +13,10 @@ library(reshape2)
 library(pheatmap)
 library(ggplot2)
 library(ggpubr)
-library(stringr)
-library(rstatix)
 
 ## =============================================================================
 ## Paths + input
-base_dir <- "path/to/folder"
+base_dir <- "/path/to/folder"
 seu_path <- file.path(base_dir, "ALL_Seurat_annot_combined_mac_T.rds")
 
 seu <- readRDS(seu_path)
@@ -79,9 +76,9 @@ fov_info <- md %>%
 ## =============================================================================
 ## Define target groups
 mac_targets <- c("MMP19_Mac", "SPP1_Mac", "MARCO_Mac", "CXCL9_Mac")
-t_targets   <- c("Cytotoxic_CD8T", "Activated_CD4T", "Treg", "Ribosome_T")
+t_targets   <- c("Cytotoxic_CD8T", "Activated_CD4T", "Treg", "Cycling_like_T")
 
-radii <- c(10, 25, 50, 75, 100)
+radii <- 50 # um
 
 ## =============================================================================
 ## Function: compute mixing scores

@@ -8,3 +8,12 @@
 
 results/
 plots/
+
+# R session files
+.Rhistory
+.Rapp.history
+.Rproj.user/
+
+# data files shipped with the repository (stored with Git LFS)
+!data/**/*.rds
+!others/*.rds

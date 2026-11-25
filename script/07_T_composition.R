@@ -2,15 +2,9 @@
 ## Libraries
 library(Seurat)
 library(dplyr)
-library(stringr)
-library(tidyr)
 library(tibble)
 library(ggplot2)
 library(scales)
-library(readxl)
-library(survival)
-library(survminer)
-library(ggrepel)
 
 ## =====================================================
 ## Paths + input
@@ -28,16 +22,13 @@ meta <- T_only@meta.data %>%
             T_subtype = T_subtype)
 
 palette.pbmc <- c("#b30024",
-                  # "#e31a1c",
-                  # "#ff7f00",
                   "#08519c",
-                  # "#762a83",
-                  "#f28ac6", 
+                  "#f28ac6",
                   "#20b2aa")
 
 ## =====================================================
 ## Composition
-## By response (stacked bar, within macrophages)
+## By response (stacked bar, within T cells)
 T_subtype_prop_by_response <- meta %>%
   dplyr::count(response_lbl, T_subtype, name = "n") %>%
   dplyr::group_by(response_lbl) %>%
@@ -55,7 +46,7 @@ p_comp_response <- ggplot(T_subtype_prop_by_response,
 
 print(p_comp_response)
 
-## By patient (stacked bar, within macrophages)
+## By patient (stacked bar, within T cells)
 subtype_prop_by_patient_plot <- meta %>%
   dplyr::count(PatientID, response_lbl, T_subtype, name = "n") %>%
   dplyr::group_by(PatientID, response_lbl) %>%
@@ -74,7 +65,7 @@ p_comp_patient <- ggplot(subtype_prop_by_patient_plot,
 
 print(p_comp_patient)
 
-## Boxplots: per-patient subtype proportion within macrophages, grouped by PD/PR
+## Boxplots: per-patient subtype proportion within T cells, grouped by PD/PR
 subtype_prop_by_patient <- meta %>%
   dplyr::group_by(PatientID, response_lbl, T_subtype) %>%
   dplyr::summarise(n = n(), .groups = "drop_last") %>%
@@ -108,16 +99,6 @@ p_box <- ggplot(subtype_prop_by_patient,
   geom_text(aes(label = PatientID),
             position = position_jitterdodge(jitter.width = 0.25, dodge.width = 0.95),
             size = 2.1, vjust = -0.7, color = "black", show.legend = FALSE) +
-  # geom_text_repel(
-  #   aes(label = PatientID),
-  #   position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.3),
-  #   size = 2,
-  #   color = "black",
-  #   box.padding = 0.1,
-  #   point.padding = 0.1,
-  #   segment.color = "grey50",
-  #   show.legend = FALSE
-  # ) +
   scale_y_continuous(labels = scales::percent_format()) +
   labs(x = "T subtype", y = "Proportion within T", fill = "Group") +
   theme_classic() +
@@ -147,19 +128,19 @@ print(median_prop_by_response)
 
 ## =====================================================
 ## Put T subtypes into mac-reclustered seurat
-## (overwrite only the reclustered macrophage cells)
+## (overwrite only the reclustered T cells)
 seu <- readRDS(file.path(dir, "ALL_Seurat_annot_combined.rds"))
 
 annot_combined <- setNames(as.character(seu$annot_combined), colnames(seu))
 T_named <- setNames(as.character(T_only$T_subtype), colnames(T_only))
 annot_combined[names(T_named)] <- T_named
 
-# Force NA / blanks to "Unassigned" --> these are 'Unassigned' cells from Recluster_1
+# remaining T cells = 'Unassigned' in Recluster_1 -> "Unassigned"
 annot_combined[annot_combined == "T"] <- "Unassigned"
 
 lvl <- c(
   "Epi","Endo","Fib","Neu","B/Plasma",
-  "Cytotoxic_CD8T", "Activated_CD4T", "Treg", "Ribosome_T",
+  "Cytotoxic_CD8T", "Activated_CD4T", "Treg", "Cycling_like_T",
   "MMP19_Mac","SPP1_Mac","MARCO_Mac","CXCL9_Mac",
   "Unassigned"
 )

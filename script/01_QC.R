@@ -202,7 +202,7 @@ t <- system.time({
     dbr.sd = 1,
     BPPARAM = SerialParam(RNGseed = 1234)
   )
-}) # NOT REPRODUCIBLE
+})
 
 t
 
