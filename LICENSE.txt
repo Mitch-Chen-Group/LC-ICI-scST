@@ -1,0 +1,44 @@
+LC-ICI-scST Academic Research License v1.0
+Copyright © 2026.
+All rights reserved.
+
+1. Grant of License
+Permission is granted, free of charge, to any individual or organization to use, reproduce, modify, and distribute this software solely for non-commercial research, academic, or educational purposes, subject to the terms of this License.
+
+2. Permitted Uses
+Permitted uses include academic research, university teaching, student projects, non-profit research, government-funded research, benchmarking, and publication of scientific results.
+
+3. Commercial Use
+Commercial use of this software is prohibited without prior written permission from the copyright holder.
+
+Commercial use includes, but is not limited to:
+• Use within a commercial company.
+• Incorporation into commercial software.
+• Use in paid consulting.
+• Software-as-a-Service (SaaS) or cloud services.
+• Medical device products or commercial clinical software.
+• Licensing or selling derivative works.
+
+Commercial licensing opportunities are available upon request.
+
+4. Attribution
+Users shall retain this copyright notice and this License in all copies or substantial portions of the software. Publications using LCUNet should cite the accompanying publication(s).
+
+5. Redistribution
+Redistribution is permitted provided that this License accompanies the software, copyright notices remain intact, and any modifications are clearly identified.
+
+6. Modifications
+Users may modify the software for non-commercial research purposes only. Modified versions distributed to others must remain under this License and clearly document the changes made.
+
+7. No Warranty
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+8. Limitation of Liability
+In no event shall the copyright holder be liable for any claim, damages, or other liability arising from the use of this software.
+
+9. Termination
+Any use inconsistent with this License automatically terminates the permissions granted herein.
+
+10. Contact
+Commercial licensing enquiries:
+Email: d.mitch.chen@gmail.com

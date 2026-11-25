@@ -2,7 +2,9 @@
 
 End-to-end analysis pipeline for CosMx spatial single-cell transcriptomics readout for precision immune checkpoint inhibition (ICI) in non-small cell lung cancer.
 
-For the manuscript "Spatial single-cell analysis reveals macrophage microenvironment associated with immunotherapy resistance in non-small cell lung cancer". The manuscript is in press at NPJ Precision Oncology.
+Code for Paper:
+
+Sieh JYX, Viola P, Puccio I, Iles S, Cortellini A, Lambie N, Matthews N, Copley SJ, Pinato DJ, Aboagye EO, Chen M. Spatial single-cell analysis reveals macrophage microenvironment associated with immunotherapy resistance in non-small cell lung cancer. npj Precision Oncology, 2026 (In Press)
 
 ## Cohort
 
@@ -82,3 +84,11 @@ Analyses were run in R. Versions of the main packages used to check these script
 | scDblFinder       | 1.26.9             | lme4            | 2.0.6      |
 | SpatialExperiment | 1.22.0             | lmerTest        | 3.2.1      |
 | pROC              | 1.19.1             | ggplot2         | 4.0.3      |
+
+## Licence
+
+Code released under the LC-ICI-scST Academic Research License v1.0.
+
+✔ Free for academic research ✔ Free for educational use ✔ Free for non-commercial use ✘ Commercial use is prohibited without prior written permission.
+
+For commercial licensing enquiries, please contact: d.mitch.chen@gmail.com
